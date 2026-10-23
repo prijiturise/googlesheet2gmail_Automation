@@ -1,0 +1,137 @@
+{
+  "name": "Google Sheets to Gmail Automation",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        -16
+      ],
+      "id": "1cca9017-f6e6-4269-8d4f-414a6cda1dcb",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ucBwIerlQqEHmr8R0TtGWi7XfZutBwuhIhiPP7jdpvY",
+          "mode": "list",
+          "cachedResultName": "Student Records no data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ucBwIerlQqEHmr8R0TtGWi7XfZutBwuhIhiPP7jdpvY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Students",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ucBwIerlQqEHmr8R0TtGWi7XfZutBwuhIhiPP7jdpvY/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -224,
+        -16
+      ],
+      "id": "85b6556f-2ca6-41f1-8212-7ca8d89f1a06",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "adseYaotkaFLF56e",
+          "name": "n8nautomations"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst rows = $input.all();\n\nconst validRows = rows.filter(item => {\n  const row = item.json;\n  return row.Name || row.Course || row.Status;\n});\n\nif (validRows.length === 0) {\n  return [];\n}\n\nconst details = validRows.map((item, index) => {\n  const row = item.json;\n\n  return `${index + 1}. ${row.Name || \"Not provided\"}\n   Course: ${row.Course || \"Not provided\"}\n   Status: ${row.Status || \"Not provided\"}`;\n}).join(\"\\n\\n\");\n\nconst statuses = validRows.map(item =>\n  item.json.Status || \"Not provided\"\n);\n\nconst uniqueStatuses = [...new Set(statuses)];\n\nconst subject = uniqueStatuses.length === 1\n  ? `Student Status Report - ${uniqueStatuses[0]}`\n  : \"Student Status Report - Multiple Statuses\";\n\nconst body = `Hello,\n\nPlease find below the latest student status report.\n\n${details}\n\nTotal students: ${validRows.length}\n\nRegards,\nYour Automation Bot`;\n\nreturn [{\n  json: {\n    subject,\n    body,\n    recordCount: validRows.length\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        -16
+      ],
+      "id": "fbe3340a-e087-4147-bafe-6a127528c987",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "sendTo": "priazpage@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        -16
+      ],
+      "id": "509766dc-f9da-4f5f-8e20-ac3383ee39fa",
+      "name": "Send a message",
+      "webhookId": "b54cc9bd-b57b-447b-a714-78612d689ac2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gGw8P3ZgNlEGDpNn",
+          "name": "n8nautomation"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d36c7354-39af-4f57-a1ae-6853aceb48d9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7c098879c145298b349076ec39e8a857fc64431bd69d38c8e768bccf986edd8b"
+  },
+  "nodeGroups": [],
+  "id": "3PxmfBU8B3FWJkbY",
+  "tags": []
+}
